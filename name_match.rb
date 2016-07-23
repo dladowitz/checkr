@@ -3,7 +3,6 @@ def name_match?(known_names, name)
 
   known_people = create_known_people(known_names)
   alias_name = Person.new(name)
-  
   return check_person_against_known_people(alias_name, known_people)
 end
 
@@ -30,33 +29,28 @@ class Person
   attr_accessor :first, :middle, :last
 
   def initialize(name_string)
-    @first = nil
-    @middle = nil
-    @last = nil
+    @first = nil; @middle = nil; @last = nil
 
     parse_name(name_string)
   end
 
   def == (other_person)
-    # check first_name
-    return false if self.name_fragment_missing?(self.first, other_person)
-    # check last_name
-    return false if self.name_fragment_missing?(self.last, other_person)
-    # check middle name
-    if self.middle && other_person.middle
-      return false if self.name_fragment_missing?(self.middle, other_person)
+    attributes = [:first, :last]
+    attributes << :middle if self.middle && other_person.middle
+
+    attributes.each do |attribute|
+      found = false
+      other_person_attributes = [:first, :last]
+      other_person_attributes << :middle if other_person.middle
+
+      other_person_attributes.each do |other_person_attribute|
+        if Person.similiar_names(self.send(attribute), other_person.send(other_person_attribute))
+          found = true and break
+        end
+      end
+
+      return false unless found
     end
-
-    return true
-  end
-
-  def name_fragment_missing?(name_fragment, other_person)
-    # check first name
-    return false if Person.similiar_names(name_fragment, other_person.first)
-    #check last name
-    return false if Person.similiar_names(name_fragment, other_person.last)
-    #check middle name
-    return false if other_person.middle && Person.similiar_names(name_fragment, other_person.middle)
 
     return true
   end
@@ -74,21 +68,27 @@ class Person
   end
 
   def self.similiar_names(name1, name2)
+    return Person.initial_match(name1, name2) if Person.single_initial_present(name1, name2)
+
     errors = 0
     longer_name_length = [name1.length, name2.length].max
 
-      if name1.length == 1 || name2.length == 1
-        return name1[0] == name2[0]
-      else
-        longer_name_length.times do |index|
-          if name1[index] != name2[index]
-            errors += 1
-            return false if errors > 1
-          end
-        end
+    longer_name_length.times do |index|
+      if name1[index] != name2[index]
+        errors += 1
+        return false if errors > 1
       end
+    end
 
     return true
+  end
+
+  def self.initial_match(name1, name2)
+    name1[0] == name2[0]
+  end
+
+  def self.single_initial_present(name1, name2)
+    name1.length == 1 || name2.length == 1
   end
 end
 
