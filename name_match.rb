@@ -1,22 +1,28 @@
 def name_match?(known_names, name)
   return true if naive_match(known_names, name)
 
-  known_people = []
-  known_names.each do |known_name|
-    known_people << Person.new(known_name)
-  end
-
+  known_people = create_known_people(known_names)
   alias_name = Person.new(name)
+  
+  return check_person_against_known_people(alias_name, known_people)
+end
 
+def naive_match(known_names, name)
+  known_names.include? name
+end
+
+def create_known_people(known_names)
+  known_names.map do |known_name|
+    Person.new(known_name)
+  end
+end
+
+def check_person_against_known_people(alias_name, known_people)
   known_people.each do |known_person|
     return true if alias_name == known_person
   end
 
   return false
-end
-
-def naive_match(known_names, name)
-  known_names.include? name
 end
 
 
@@ -54,6 +60,8 @@ class Person
 
     return true
   end
+
+  private
 
   def parse_name(name_string)
     split_name = name_string.split
